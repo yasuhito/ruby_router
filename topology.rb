@@ -2,19 +2,31 @@
 require "observer"
 
 
-class Port
+class TopologyPort
+  def initialize number, name
+    @number = number
+    @name = name
+  end
+
+
   def down
+    # TODO
   end
 end
 
 
-class Switch
+class TopologySwitch
   attr_reader :ports
 
 
   def initialize datapath_id
     @datapath_id = datapath_id
     @ports = []
+  end
+
+
+  def add port
+    @ports << TopologyPort.new( port.number, port.name )
   end
 
 
@@ -30,7 +42,7 @@ end
 #
 # TODO: それぞれのハンドラのテスト
 #
-class Topology < Controller
+class TopologyController < Controller
   include Observable
 
 
@@ -57,14 +69,18 @@ class Topology < Controller
     ports( datapath_id ).each do | each |
       @switches[ datapath_id ].delete each
       changed
-      notify_observers each
+      notify_observers datapath_id, each
     end
     delete_switch datapath_id
   end
 
 
   def features_reply datapath_id, message
-    # TODO: スイッチのポート情報を追加してサブスクライバに notify
+    message.ports.each do | each |
+      @switches[ datapath_id ].add each
+      changed
+      notify_observers datapath_id, each
+    end
   end
 
 
@@ -89,7 +105,7 @@ class Topology < Controller
 
 
   def add_switch datapath_id
-    @switches[ datapath_id ] = Switch.new( datapath_id )
+    @switches[ datapath_id ] = TopologySwitch.new( datapath_id )
   end
 
 
