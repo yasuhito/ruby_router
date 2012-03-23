@@ -2,10 +2,25 @@
 require "observer"
 
 
+class Port
+  def down
+  end
+end
+
+
 class Switch
+  attr_reader :ports
+
+
   def initialize datapath_id
     @datapath_id = datapath_id
     @ports = []
+  end
+
+
+  def delete port
+    port.down
+    @ports -= [ port ]
   end
 end
 
@@ -39,8 +54,12 @@ class Topology < Controller
 
 
   def switch_disconnected datapath_id
-    @switches.delete datapath_id
-    # TODO: スイッチの接続先ポートを確認してサブスクライバに notify
+    ports( datapath_id ).each do | each |
+      @switches[ datapath_id ].delete each
+      changed
+      notify_observers each
+    end
+    delete_switch datapath_id
   end
 
 
@@ -71,6 +90,19 @@ class Topology < Controller
 
   def add_switch datapath_id
     @switches[ datapath_id ] = Switch.new( datapath_id )
+  end
+
+
+  def delete_switch datapath_id
+    @switches.delete datapath_id
+  end
+
+
+  def ports datapath_id
+    if @switches[ datapath_id ]
+      return @switches[ datapath_id ].ports
+    end
+    []
   end
 
 
