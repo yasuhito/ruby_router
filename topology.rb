@@ -34,6 +34,7 @@ class Topology < Controller
     add_switch datapath_id
     add_flow_for_receiving_lldp datapath_id
     add_flow_for_discarding_every_other_packet datapath_id
+    send_message datapath_id, FeaturesRequest.new
   end
 
 
