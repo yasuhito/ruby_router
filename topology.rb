@@ -33,7 +33,7 @@ class Topology < Controller
   def switch_ready datapath_id
     add_switch datapath_id
     add_flow_for_receiving_lldp datapath_id
-    add_flow_for_discarding_other_packets datapath_id
+    add_flow_for_discarding_every_other_packet datapath_id
   end
 
 
@@ -84,7 +84,7 @@ class Topology < Controller
   end
 
 
-  def add_flow_for_discarding_other_packets datapath_id
+  def add_flow_for_discarding_every_other_packet datapath_id
     send_flow_mod_add(
       datapath_id,
       :priority => UINT16_MAX - 1,
