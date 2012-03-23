@@ -3,9 +3,13 @@ require "observer"
 
 
 class TopologyPort
-  def initialize number, name
-    @number = number
-    @name = name
+  def initialize port
+    @port = port
+  end
+
+
+  def up?
+    @port.up?
   end
 
 
@@ -26,13 +30,29 @@ class TopologySwitch
 
 
   def add port
-    @ports << TopologyPort.new( port.number, port.name )
+    @ports << port
   end
 
 
   def delete port
     port.down
     @ports -= [ port ]
+  end
+
+
+  def find port
+    candidate = nil
+    @ports.each do | each |
+      if port.name.nil?
+        return each if each.number == port.number
+      else
+        return each if each.name == port.name
+        if each.number == port.number
+          candidate = each
+        end
+      end
+    end
+    candidate
   end
 end
 
@@ -77,25 +97,37 @@ class TopologyController < Controller
 
   def features_reply datapath_id, message
     message.ports.each do | each |
-      @switches[ datapath_id ].add each
+      @switches[ datapath_id ].add TopologyPort.new( each )
       changed
       notify_observers datapath_id, each
     end
   end
 
 
-  # port_status() in topology_management.c
   def port_status datapath_id, message
+    switch = @switches[ datapath_id ]
     case message
-    when PortStatusAdd
-      # TODO: ポート情報を更新してサブスクライバに notify
-    when PortStatusDelete
-      # TODO: ポート情報を更新してサブスクライバに notify
-    when PortStatusModify
-      # TODO: ポート情報を更新してサブスクライバに notify
-    else
-      raise "Unknown reason"
+      when PortStatusAdd
+        switch.add TopologyPort.new( message.phy_port )
+        changed
+      when PortStatusDelete
+        switch.delete switch.find( message.phy_port )
+        changed
+      when PortStatusModify
+        if switch.find( message.phy_port ).number != message.phy_port.number
+          switch.delete switch.find( message.phy_port )
+          switch.add TopologyPort.new( message.phy_port )
+          changed
+        else
+          if switch.find( message.phy_port ).name != message.phy_port.name
+            switch.find( message.phy_port ).name = message.phy_port.name
+          end
+          changed
+        end
+      else
+        raise "Unknown reason"
     end
+    notify_observers datapath_id, switch.find( message.phy_port )
   end
 
 
