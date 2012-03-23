@@ -1,8 +1,16 @@
 # -*- coding: utf-8 -*-
+require "observer"
+
+
+#
+# Trema/Apps の topology Ruby 版
+#
 # TODO: それぞれのハンドラのテスト
-
-
+#
 class Topology < Controller
+  include Observable
+
+
   UINT16_MAX = ( 1 << 16 ) - 1  # FIXME: FLOW_MOD_MAX_PRIORITY?
   OFPFW_ALL = ( 1 << 22 ) - 1  # FIXME
   OFPFW_DL_TYPE = 1 << 4  # FIXME
@@ -16,7 +24,9 @@ class Topology < Controller
 
 
   def switch_ready datapath_id
+    # TODO: スイッチクラス (dpid + ポート情報)
     @switches << datapath_id
+
     send_flow_mod_add(
       datapath_id,
       :priority => UINT16_MAX,
@@ -34,12 +44,13 @@ class Topology < Controller
 
 
   def switch_disconnected datapath_id
-    # switch_disconnected() in topology_management.c
+    # TODO: スイッチの接続先ポートを確認してサブスクライバに notify
+    @switches -= [ datapath_id ]
   end
 
 
   def features_reply datapath_id, message
-    # switch_features_reply() in topology_management.c
+    # TODO: スイッチのポート情報を追加してサブスクライバに notify
   end
 
 
@@ -47,11 +58,11 @@ class Topology < Controller
   def port_status datapath_id, message
     case message
     when PortStatusAdd
-      # TODO
+      # TODO: ポート情報を更新してサブスクライバに notify
     when PortStatusDelete
-      # TODO
+      # TODO: ポート情報を更新してサブスクライバに notify
     when PortStatusModify
-      # TODO
+      # TODO: ポート情報を更新してサブスクライバに notify
     else
       raise "Unknown reason"
     end
