@@ -2,6 +2,14 @@
 require "observer"
 
 
+class Switch
+  def initialize datapath_id
+    @datapath_id = datapath_id
+    @ports = []
+  end
+end
+
+
 #
 # Trema/Apps の topology Ruby 版
 #
@@ -13,39 +21,25 @@ class Topology < Controller
 
   UINT16_MAX = ( 1 << 16 ) - 1  # FIXME: FLOW_MOD_MAX_PRIORITY?
   OFPFW_ALL = ( 1 << 22 ) - 1  # FIXME
-  OFPFW_DL_TYPE = 1 << 4  # FIXME
   ETH_ETH_TYPE_LLDP = 0x88cc  # FIXME
   INITIAL_DISCOVERY_PERIOD = 5
 
 
   def start
-    @switches = []
+    @switches = {}
   end
 
 
   def switch_ready datapath_id
-    # TODO: スイッチクラス (dpid + ポート情報)
-    @switches << datapath_id
-
-    send_flow_mod_add(
-      datapath_id,
-      :priority => UINT16_MAX,
-      :hard_timeout => INITIAL_DISCOVERY_PERIOD,
-      :match => Match.new( :wildcards => OFPFW_ALL & ~OFPFW_DL_TYPE, :dl_type => ETH_ETHTYPE_LLDP ),
-      :actions => ActionOutput.new( :port => OFPP_CONTROLLER, :max_len => UINT16_MAX )
-    )
-    send_flow_mod_add(
-      datapath_id,
-      :priority => UINT16_MAX - 1,
-      :hard_timeout => INITIAL_DISCOVERY_PERIOD,
-      :match => Match.new( :wildcards => OFPFW_ALL )
-    )
+    add_switch datapath_id
+    add_flow_for_receiving_lldp datapath_id
+    add_flow_for_discarding_other_packets datapath_id
   end
 
 
   def switch_disconnected datapath_id
+    @switches.delete datapath_id
     # TODO: スイッチの接続先ポートを確認してサブスクライバに notify
-    @switches -= [ datapath_id ]
   end
 
 
@@ -66,6 +60,37 @@ class Topology < Controller
     else
       raise "Unknown reason"
     end
+  end
+
+
+  ################################################################################
+  private
+  ################################################################################
+
+
+  def add_switch datapath_id
+    @switches[ datapath_id ] = Switch.new( datapath_id )
+  end
+
+
+  def add_flow_for_receiving_lldp datapath_id
+    send_flow_mod_add(
+      datapath_id,
+      :priority => UINT16_MAX,
+      :hard_timeout => INITIAL_DISCOVERY_PERIOD,
+      :match => Match.new( :dl_type => ETH_ETHTYPE_LLDP ),
+      :actions => ActionOutput.new( :port => OFPP_CONTROLLER, :max_len => UINT16_MAX )
+    )
+  end
+
+
+  def add_flow_for_discarding_other_packets datapath_id
+    send_flow_mod_add(
+      datapath_id,
+      :priority => UINT16_MAX - 1,
+      :hard_timeout => INITIAL_DISCOVERY_PERIOD,
+      :match => Match.new( :wildcards => OFPFW_ALL )  # FIXME: "すべてにマッチ" って簡単に書けない？
+    )
   end
 end
 
