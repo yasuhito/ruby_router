@@ -3,8 +3,33 @@
 
 
 class Topology < Controller
+  UINT16_MAX = ( 1 << 16 ) - 1  # FIXME: FLOW_MOD_MAX_PRIORITY?
+  OFPFW_ALL = ( 1 << 22 ) - 1  # FIXME
+  OFPFW_DL_TYPE = 1 << 4  # FIXME
+  ETH_ETH_TYPE_LLDP = 0x88cc  # FIXME
+  INITIAL_DISCOVERY_PERIOD = 5
+
+
+  def start
+    @switches = []
+  end
+
+
   def switch_ready datapath_id
-    # handle_switch_ready() in topology_management.c
+    @switches << datapath_id
+    send_flow_mod_add(
+      datapath_id,
+      :priority => UINT16_MAX,
+      :hard_timeout => INITIAL_DISCOVERY_PERIOD,
+      :match => Match.new( :wildcards => OFPFW_ALL & ~OFPFW_DL_TYPE, :dl_type => ETH_ETHTYPE_LLDP ),
+      :actions => ActionOutput.new( :port => OFPP_CONTROLLER, :max_len => UINT16_MAX )
+    )
+    send_flow_mod_add(
+      datapath_id,
+      :priority => UINT16_MAX - 1,
+      :hard_timeout => INITIAL_DISCOVERY_PERIOD,
+      :match => Match.new( :wildcards => OFPFW_ALL )
+    )
   end
 
 
