@@ -25,6 +25,12 @@ class TopologySwitch < Trema::Switch
   def controller_connected
     info "Connected to a controller."
   end
+
+
+  def hello xid, version
+    info "Hello (xid=#{ xid }, version=#{ version })"
+    send_message Trema::Hello.new( xid )
+  end
 end
 
 
