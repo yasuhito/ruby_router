@@ -16,9 +16,9 @@
 #
 
 
-class TopologySwitch < Trema::Switch
+class TopologySwitch < Switch
   def start
-    info "Started"
+    info "Started (dpid=#{ @dpid.to_hex })."
   end
 
 
@@ -28,14 +28,14 @@ class TopologySwitch < Trema::Switch
 
 
   def hello xid, version
-    info "Hello (xid=#{ xid }, version=#{ version })"
-    send_message Trema::Hello.new( xid )
+    info "Hello (xid=#{ xid }, version=#{ version })."
+    send_message Hello.new( xid )
   end
 
 
   def features_request xid
-    info "Features Request (xid=#{ xid })"
-    send_message Trema::FeaturesReply.new( 
+    info "Features Request (xid=#{ xid })."
+    send_message FeaturesReply.new( 
       :datapath_id => @dpid,
       :transaction_id => xid,
       :n_buffers => 256,
@@ -48,7 +48,7 @@ class TopologySwitch < Trema::Switch
 
 
   def echo_request xid, body
-    info "Echo Request (xid=#{ xid }, body=\"#{ body }\")"
+    info "Echo Request (xid=#{ xid }, body=\"#{ body }\")."
   end
 end
 
