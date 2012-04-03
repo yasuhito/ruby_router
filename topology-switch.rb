@@ -35,20 +35,7 @@ class TopologySwitch < Switch
 
   def features_request xid
     info "Features Request (xid=#{ xid })."
-    send_message FeaturesReply.new( 
-      :datapath_id => @dpid,
-      :transaction_id => xid,
-      :n_buffers => 256,
-      :n_tables => 2,
-      :capabilities => 135,
-      :actions => 2047,
-      :ports => []
-    )
-  end
-
-
-  def echo_request xid, body
-    info "Echo Request (xid=#{ xid }, body=\"#{ body }\")."
+    send_message FeaturesReply.new( :datapath_id => @dpid, :transaction_id => xid )
   end
 end
 
