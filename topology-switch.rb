@@ -18,24 +18,7 @@
 
 class TopologySwitch < Switch
   def start
-    info "Started (dpid=#{ @dpid.to_hex })."
-  end
-
-
-  def controller_connected
-    info "Connected to a controller."
-  end
-
-
-  def hello xid, version
-    info "Hello (xid=#{ xid }, version=#{ version })."
-    send_message Hello.new( xid )
-  end
-
-
-  def features_request xid
-    info "Features Request (xid=#{ xid })."
-    send_message FeaturesReply.new( :datapath_id => @dpid, :transaction_id => xid )
+    info "Started (datapath_id = #{ datapath_id.to_hex })."
   end
 end
 

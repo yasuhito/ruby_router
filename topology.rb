@@ -68,7 +68,7 @@ class TopologyController < Controller
 
   UINT16_MAX = ( 1 << 16 ) - 1  # FIXME: FLOW_MOD_MAX_PRIORITY?
   OFPFW_ALL = ( 1 << 22 ) - 1  # FIXME
-  ETH_ETH_TYPE_LLDP = 0x88cc  # FIXME
+  ETH_ETHTYPE_LLDP = 0x88cc  # FIXME
   INITIAL_DISCOVERY_PERIOD = 5
 
 
@@ -137,6 +137,7 @@ class TopologyController < Controller
 
 
   def add_switch datapath_id
+    info "New Switch (datapath_id = #{ datapath_id.to_hex })."
     @switches[ datapath_id ] = TopologySwitch.new( datapath_id )
   end
 
